@@ -26,7 +26,7 @@ module Brig.App
     , userTemplates
     , providerTemplates
     , teamTemplates
-    , templateBrand
+    , templateBranding
     , requestId
     , httpManager
     , extGetManager
@@ -139,7 +139,7 @@ data Env = Env
     , _usrTemplates  :: Localised UserTemplates
     , _provTemplates :: Localised ProviderTemplates
     , _tmTemplates   :: Localised TeamTemplates
-    , _templateBrand :: TemplateBranding
+    , _templateBranding :: TemplateBranding
     , _httpManager   :: Manager
     , _extGetManager :: (Manager, [Fingerprint Rsa] -> SSL.SSL -> IO ())
     , _settings      :: Settings
@@ -215,7 +215,7 @@ newEnv o = do
         , _usrTemplates  = utp
         , _provTemplates = ptp
         , _tmTemplates   = ttp
-        , _templateBrand = branding
+        , _templateBranding = branding
         , _httpManager   = mgr
         , _extGetManager = ext
         , _settings      = sett
