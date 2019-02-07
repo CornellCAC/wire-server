@@ -26,6 +26,7 @@ module Brig.App
     , userTemplates
     , providerTemplates
     , teamTemplates
+    , templateBrand
     , requestId
     , httpManager
     , extGetManager
@@ -58,7 +59,7 @@ import Bilge (MonadHttp, Manager, newManager, RequestId (..))
 import Bilge.RPC (HasRequestId (..))
 import Brig.Options (Opts, Settings)
 import Brig.Queue.Types (Queue (..))
-import Brig.Template (Localised, forLocale)
+import Brig.Template (Localised, forLocale, genTemplateBranding, TemplateBranding)
 import Brig.Provider.Template
 import Brig.Team.Template
 import Brig.User.Search.Index (runIndexIO, IndexEnv (..), MonadIndexIO (..))
@@ -138,6 +139,7 @@ data Env = Env
     , _usrTemplates  :: Localised UserTemplates
     , _provTemplates :: Localised ProviderTemplates
     , _tmTemplates   :: Localised TeamTemplates
+    , _templateBrand :: TemplateBranding
     , _httpManager   :: Manager
     , _extGetManager :: (Manager, [Fingerprint Rsa] -> SSL.SSL -> IO ())
     , _settings      :: Settings
@@ -176,6 +178,7 @@ newEnv o = do
     utp <- loadUserTemplates o
     ptp <- loadProviderTemplates o
     ttp <- loadTeamTemplates o
+    let branding = genTemplateBranding $ Opt.templateBranding $ Opt.general (Opt.emailSMS o)
     (emailAWSOpts, emailSMTP) <- emailConn lgr $ Opt.email (Opt.emailSMS o)
     aws <- AWS.mkEnv lgr (Opt.aws o) emailAWSOpts mgr
     zau <- initZAuth o
@@ -212,6 +215,7 @@ newEnv o = do
         , _usrTemplates  = utp
         , _provTemplates = ptp
         , _tmTemplates   = ttp
+        , _templateBrand = branding
         , _httpManager   = mgr
         , _extGetManager = ext
         , _settings      = sett
