@@ -48,6 +48,7 @@ specCreateUser :: SpecWith TestEnv
 specCreateUser = describe "POST /Users" $ do
     it "creates a user in an existing team" $ testCreateUser
     it "requires externalId to be present" $ testExternalIdIsRequired
+    it "provides a correct location in the 'meta' field" $ testLocation
     it "gives created user a valid 'SAML.UserRef' for SSO" $ pending
     it "attributes of {brig, scim, saml} user are mapped as documented" $ pending
     it "writes all the stuff to all the places" $
@@ -82,6 +83,24 @@ testExternalIdIsRequired = do
     (tok, _) <- registerIdPAndScimToken
     createUser_ (Just tok) user' (env ^. teSpar)
         !!! const 400 === statusCode
+
+-- | Test that the resource location returned for the user is correct and the user can be
+-- fetched by following that location.
+--
+-- TODO: also check the @Location@ header. Currently we don't set the @Location@ header, but
+-- we should.
+testLocation :: TestSpar ()
+testLocation = do
+    -- Create a user
+    user <- randomScimUser
+    (tok, _) <- registerIdPAndScimToken
+    scimStoredUser <- createUser tok user
+    -- Fetch the @meta.location@ and check that it returns the same user
+    let location = Scim.location (Scim.meta scimStoredUser)
+    req <- parseRequest (show (Scim.unURI location))
+               <&> scimAuth (Just tok) . acceptScim
+    r <- call (get (const req)) <!! const 200 === statusCode
+    liftIO $ decodeBody' r `shouldBe` scimStoredUser
 
 ----------------------------------------------------------------------------
 -- Listing users
